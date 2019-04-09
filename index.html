@@ -1,0 +1,70 @@
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>Shopping Cart</title>
+    </head>
+    <body>
+        <main id="main">
+            <form id="form_item" method="POST" action="items">
+                <label for="itemCode">Item Code</label>
+                <input name="itemCode" type="text" />
+                <input type="submit" value="Submit" />
+            </form>
+            <div id="notification"></div>
+            <div id="item_list"></div>
+        </main>
+    </body>
+    <script>
+        document.querySelector('#form_item').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let formData = new FormData(this);
+            let parsedData = {};
+            for(let name of formData) {
+              if (typeof(parsedData[name[0]]) == "undefined") {
+                let tempdata = formData.getAll(name[0]);
+                if (tempdata.length > 1) {
+                  parsedData[name[0]] = tempdata;
+                } else {
+                  parsedData[name[0]] = tempdata[0];
+                }
+              }
+            }
+        
+            let options = {};
+            switch (this.method.toLowerCase()) {
+              case 'post':
+                options.body = JSON.stringify(parsedData);
+              case 'get':
+                options.method = this.method;
+                options.headers = {'Content-Type': 'application/json'};
+              break;
+            }
+        
+            fetch(this.action, options).then(async (r) => {return await r.json();}).then(data => {
+              const text = data.itemCode;
+              const notification = document.getElementById('notification');
+              notification.innerHTML = `Item created ${text}`
+
+              let getOptions = {
+                  method : 'get',
+                  headers : {'Content-Type': 'application/json'}
+              }
+
+              fetch('http://localhost:3000/items', getOptions)
+                .then(async (r) => {return await r.json();}).then(data => {
+                const arrayOfItems = data;
+                console.log(data)
+
+                document.getElementById('item_list').innerHTML = ''
+                for(let item of arrayOfItems) {
+                    const label = document.createElement('label');
+                    label.innerHTML = item.itemCode + ', ';
+                    document.getElementById('item_list').appendChild(label);
+                }
+            });
+              
+              document.querySelector('#form_item [name=itemCode]').value = '';
+            });
+        });
+    </script>
+</html>
